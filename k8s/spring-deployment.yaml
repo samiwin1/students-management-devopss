@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: spring-app
-  namespace: devops
+  namespace: dev
 spec:
   replicas: 1
   selector:
@@ -15,13 +15,34 @@ spec:
     spec:
       containers:
         - name: spring-app
-          image: samiwin/students-management:1.0.0
+          image: YOUR_DOCKERHUB_USER/students-management:1
+          imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8089
+            - containerPort: 8080
           env:
             - name: SPRING_DATASOURCE_URL
-              value: jdbc:mysql://mysql-service:3306/studentdb?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-config
+                  key: SPRING_DATASOURCE_URL
             - name: SPRING_DATASOURCE_USERNAME
-              value: root
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-config
+                  key: SPRING_DATASOURCE_USERNAME
             - name: SPRING_DATASOURCE_PASSWORD
-              value: root
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-config
+                  key: SPRING_JPA_HIBERNATE_DDL_AUTO
+            - name: SPRING_JPA_SHOW_SQL
+              valueFrom:
+                configMapKeyRef:
+                  name: spring-config
+                  key: SPRING_JPA_SHOW_SQL
+
