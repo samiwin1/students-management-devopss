@@ -66,14 +66,9 @@ stage('Deploy to Kubernetes (Minikube)') {
     sh '''
       set -e
 
-      # Optional: create namespace first
-      kubectl apply -f k8s/namespace.yaml || true
-
-      # Apply MySQL (if you need it)
+      kubectl apply -f k8s/namespace.yaml
       kubectl apply -f k8s/mysql-deployment.yaml
       kubectl apply -f k8s/mysql-service.yaml
-
-      # Apply Spring app
       kubectl apply -f k8s/spring-deployment.yaml
       kubectl apply -f k8s/spring-service.yaml
 
@@ -82,6 +77,7 @@ stage('Deploy to Kubernetes (Minikube)') {
     '''
   }
 }
+
 
 
 
