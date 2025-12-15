@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mysql
-  namespace: devops
+  namespace: dev
 spec:
   replicas: 1
   selector:
@@ -15,11 +15,14 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: mysql:8
+          image: mysql:8.0
           ports:
             - containerPort: 3306
           env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: root
             - name: MYSQL_DATABASE
-              value: studentdb
+              value: "studentsdb"
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
