@@ -1,48 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: spring-app
-  namespace: dev
+  name: students-management
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: spring-app
+      app: students-management
   template:
     metadata:
       labels:
-        app: spring-app
+        app: students-management
     spec:
       containers:
-        - name: spring-app
-          image: YOUR_DOCKERHUB_USER/students-management:1
-          imagePullPolicy: IfNotPresent
+        - name: app
+          image: IMAGE_PLACEHOLDER
+          imagePullPolicy: Always
           ports:
-            - containerPort: 8080
-          env:
-            - name: SPRING_DATASOURCE_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: spring-config
-                  key: SPRING_DATASOURCE_URL
-            - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                configMapKeyRef:
-                  name: spring-config
-                  key: SPRING_DATASOURCE_USERNAME
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: MYSQL_ROOT_PASSWORD
-            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
-              valueFrom:
-                configMapKeyRef:
-                  name: spring-config
-                  key: SPRING_JPA_HIBERNATE_DDL_AUTO
-            - name: SPRING_JPA_SHOW_SQL
-              valueFrom:
-                configMapKeyRef:
-                  name: spring-config
-                  key: SPRING_JPA_SHOW_SQL
-
+            - containerPort: 8089
