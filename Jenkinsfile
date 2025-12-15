@@ -32,11 +32,13 @@ pipeline {
     stage('Docker Login & Push') {
       steps {
         withCredentials([usernamePassword(credentialsId: 'DOCKERHUB_CREDENTIALS', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
-          sh '''
-            echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
-            docker push $IMAGE:latest
-            docker logout
-          '''
+          sh 'echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin'
+          sh 'docker push $IMAGE:latest'
+        }
+      }
+      post {
+        always {
+          sh 'docker logout || true'
         }
       }
     }
