@@ -1,54 +1,44 @@
 pipeline {
-    agent any
+  agent any
 
-    environment {
-        IMAGE_NAME = "samiwin1/students-management-devopss"
-        IMAGE_TAG  = "latest"
+  environment {
+    IMAGE = "samiwin1/students-management-devopss"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
     }
 
-    stages {
-
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Build with Maven') {
-            steps {
-                sh '''
-                  chmod +x mvnw
-                  ./mvnw clean package -DskipTests
-                '''
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                sh '''
-                  docker build -t $IMAGE_NAME:$IMAGE_TAG .
-                '''
-            }
-        }
-
-        stage('Docker Login & Push') {
-            steps {
-                withCredentials([string(credentialsId: 'github-token', variable: 'DOCKER_PASS')]) {
-                    sh '''
-                      echo "$DOCKER_PASS" | docker login -u samiwin1 --password-stdin
-                      docker push $IMAGE_NAME:$IMAGE_TAG
-                    '''
-                }
-            }
-        }
+    stage('Build JAR') {
+      steps {
+        sh '''
+          chmod +x mvnw || true
+          if [ -f "./mvnw" ]; then
+            ./mvnw -DskipTests clean package
+          else
+            mvn -DskipTests clean package
+          fi
+        '''
+      }
     }
 
-    post {
-        success {
-            echo "Pipeline finished successfully ✅"
-        }
-        failure {
-            echo "Pipeline failed ❌"
-        }
+    stage('Docker Build') {
+      steps {
+        sh 'docker build -t $IMAGE:latest .'
+      }
     }
+
+    stage('Docker Login & Push') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'DOCKERHUB_CREDENTIALS', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
+          sh '''
+            echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
+            docker push $IMAGE:latest
+            docker logout
+          '''
+        }
+      }
+    }
+  }
 }
