@@ -2,12 +2,15 @@ pipeline {
   agent any
 
   environment {
-    IMAGE = "samiwin1/students-management-devopss"
+    IMAGE_NAME = "students-management-devopss"
   }
 
   stages {
+
     stage('Checkout') {
-      steps { checkout scm }
+      steps {
+        checkout scm
+      }
     }
 
     stage('Build JAR') {
@@ -25,20 +28,36 @@ pipeline {
 
     stage('Docker Build') {
       steps {
-        sh 'docker build -t $IMAGE:latest .'
+        withCredentials([
+          usernamePassword(
+            credentialsId: 'DOCKERHUB_CREDENTIALS',
+            usernameVariable: 'DH_USER',
+            passwordVariable: 'DH_PASS'
+          )
+        ]) {
+          sh '''
+            IMAGE="$DH_USER/$IMAGE_NAME"
+            docker build -t "$IMAGE:latest" .
+          '''
+        }
       }
     }
 
     stage('Docker Login & Push') {
       steps {
-        withCredentials([usernamePassword(credentialsId: 'DOCKERHUB_CREDENTIALS', usernameVariable: 'DH_USER', passwordVariable: 'DH_PASS')]) {
-          sh 'echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin'
-          sh 'docker push $IMAGE:latest'
-        }
-      }
-      post {
-        always {
-          sh 'docker logout || true'
+        withCredentials([
+          usernamePassword(
+            credentialsId: 'DOCKERHUB_CREDENTIALS',
+            usernameVariable: 'DH_USER',
+            passwordVariable: 'DH_PASS'
+          )
+        ]) {
+          sh '''
+            IMAGE="$DH_USER/$IMAGE_NAME"
+            echo "$DH_PASS" | docker login -u "$DH_USER" --password-stdin
+            docker push "$IMAGE:latest"
+            docker logout
+          '''
         }
       }
     }
