@@ -66,17 +66,27 @@ stage('Deploy to Kubernetes (Minikube)') {
     sh '''
       set -e
 
+      IMAGE="samiwin/students-management-devopss:latest"
+      NAMESPACE="dev"
+
+      # Namespace
       kubectl apply -f k8s/namespace.yaml
+
+      # MySQL
       kubectl apply -f k8s/mysql-deployment.yaml
       kubectl apply -f k8s/mysql-service.yaml
-      kubectl apply -f k8s/spring-deployment.yaml
+
+      # Spring Boot (replace image)
+      sed "s|IMAGE_PLACEHOLDER|$IMAGE|g" k8s/spring-deployment.yaml | kubectl apply -n $NAMESPACE -f -
       kubectl apply -f k8s/spring-service.yaml
 
-      kubectl get pods -A
-      kubectl get svc -A
+      # Status
+      kubectl get pods -n $NAMESPACE
+      kubectl get svc  -n $NAMESPACE
     '''
   }
 }
+
 
 
 
