@@ -63,43 +63,26 @@ pipeline {
     }
 stage('Deploy to Kubernetes (Minikube)') {
   steps {
-    withCredentials([usernamePassword(credentialsId: 'DOCKERHUB_CREDENTIALS',
-                                      usernameVariable: 'DH_USER',
-                                      passwordVariable: 'DH_PASS')]) {
-      sh '''
-        set -e
-        IMAGE="$DH_USER/$IMAGE_NAME:latest"
+    sh '''
+      set -e
 
-        # Render Spring deployment with the right Docker image
-        sed "s|IMAGE_PLACEHOLDER|$IMAGE|g" k8s/spring-deployment.yaml > k8s/spring-deployment.rendered.yaml
+      # Optional: create namespace first
+      kubectl apply -f k8s/namespace.yaml || true
 
-        # Apply namespace + mysql + spring (order matters)
-        docker run --rm \
-          -v "/home/jenkins/.kube:/root/.kube:ro" \
-          -v "$(pwd):/work" -w /work \
-          bitnami/kubectl:latest \
-          kubectl apply -f k8s/namespace.yaml
+      # Apply MySQL (if you need it)
+      kubectl apply -f k8s/mysql-deployment.yaml
+      kubectl apply -f k8s/mysql-service.yaml
 
-        docker run --rm \
-          -v "/home/jenkins/.kube:/root/.kube:ro" \
-          -v "$(pwd):/work" -w /work \
-          bitnami/kubectl:latest \
-          kubectl apply -f k8s/mysql-deployment.yaml -f k8s/mysql-service.yaml
+      # Apply Spring app
+      kubectl apply -f k8s/spring-deployment.yaml
+      kubectl apply -f k8s/spring-service.yaml
 
-        docker run --rm \
-          -v "/home/jenkins/.kube:/root/.kube:ro" \
-          -v "$(pwd):/work" -w /work \
-          bitnami/kubectl:latest \
-          kubectl apply -f k8s/spring-deployment.rendered.yaml -f k8s/spring-service.yaml
-
-        docker run --rm \
-          -v "/home/jenkins/.kube:/root/.kube:ro" \
-          bitnami/kubectl:latest \
-          kubectl get pods,svc -A
-      '''
-    }
+      kubectl get pods -A
+      kubectl get svc -A
+    '''
   }
 }
+
 
 
   }
